@@ -1,0 +1,7 @@
+name = "PerturbationFields"
+uuid = "d73b983b-cd89-4137-9caf-cda73848e487"
+authors = ["ali-ramadhan <ali.hh.ramadhan@gmail.com>"]
+version = "0.1.0"
+
+[deps]
+FFTW = "7a1cc6ca-52ef-59f5-83cd-3a7055c09341"
