@@ -7,7 +7,7 @@ maxval = 1.0  # maximum absolute value of perturbations
 # max(ni,nj)*dx.
 large_eddy_scale = 1000000000.0
 
-function ring_filter(Nx, Ny, Δx, Δy)
+function ring_filter(Nx, Ny, Δx, Δy, L₁)
     # center point indices
     i_c = Nx/2 + 1
     j_c = Ny/2 + 1
@@ -26,8 +26,6 @@ function ring_filter(Nx, Ny, Δx, Δy)
         r2 = rand()
         c[i, j] = A * exp(-2π*im*Nx*r1) * exp(-2π*im*Ny*r2)
     end
-
-    L₁ = 1000
 
     i_min = j_min = 0
     v_min = Inf
@@ -53,7 +51,7 @@ function ring_filter(Nx, Ny, Δx, Δy)
         end
     end
 
-    spectrum_2d = deepcopy(c)
+    spectrum_2d = copy(c)
 
     c = circshift(c, (Nx/2, Ny/2))
     KE = ifft(c)
@@ -81,18 +79,19 @@ function ring_filter(Nx, Ny, Δx, Δy)
         end
     end
 
-    spectrum_1d = deepcopy(sp)
+    spectrum_1d = copy(sp)
 
     return abs2.(KE), spectrum_2d, spectrum_1d
 end
 
 Nx = Ny = 192
 Δx = Δy = 125
+L₁ = 1000
 
 x = range(0, Nx*Δx, length=Nx)
 y = range(0, Ny*Δy, length=Ny)
 
-KE, s2, s1 = ring_filter(Nx, Ny, Δx, Δy)
+KE, s2, s1 = ring_filter(Nx, Ny, Δx, Δy, L₁)
 
 l = @layout [
     a{0.7w} [b{0.5h}
@@ -101,5 +100,24 @@ l = @layout [
 
 pert_plot = contourf(x/1000, y/1000, KE, color=:dense, linewidth=0, xticks=0:4:24, xlabel="x (km)", yticks=0:4:24, ylabel="y (km)", title="Perturbation field", colorbar=nothing)
 s2_plot = contourf(abs2.(s2), color=:dense, linewidth=0, xticks=[], yticks=[], colorbar=nothing, framestyle=:box, title="2D spectrum", xlabel="kx", ylabel="ky")
-s1_plot = plot(log10.(s1), linewidth=2, label="", xlims=(0, 96), xticks=0:32:96, xlabel="k", ylabel="log E(k)", title="1D spectrum")
+s1_plot = plot(log10.(s1), linewidth=2, label="", xlims=(0, 96), xticks=[], yticks=[], xlabel="k", ylabel="log E(k)", title="1D spectrum")
+plot(pert_plot, s2_plot, s1_plot, layout=l)
+
+Nx = Ny = 192
+Δx = Δy = 1/192
+L₁ = 0.3
+
+x = range(0, Nx*Δx, length=Nx)
+y = range(0, Ny*Δy, length=Ny)
+
+KE, s2, s1 = ring_filter(Nx, Ny, Δx, Δy, L₁)
+
+l = @layout [
+    a{0.7w} [b{0.5h}
+             c{0.5h}]
+]
+
+pert_plot = contourf(x, y, KE, color=:dense, linewidth=0, xlabel="x", ylabel="y", title="Perturbation field", colorbar=nothing)
+s2_plot = contourf(abs2.(s2), color=:dense, linewidth=0, xticks=[], yticks=[], colorbar=nothing, framestyle=:box, title="2D spectrum", xlabel="kx", ylabel="ky")
+s1_plot = plot(log10.(s1), linewidth=2, label="", xlims=(0, 96), xticks=[], yticks=[], xlabel="k", ylabel="log E(k)", title="1D spectrum")
 plot(pert_plot, s2_plot, s1_plot, layout=l)
